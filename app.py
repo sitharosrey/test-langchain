@@ -18,38 +18,38 @@ schema_info = db.get_table_info()
 
 print(schema_info)
 
-# # Initialize the model with the specified version of LLaMA
-# model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
-#
-# # Create a chain by piping the prompt to the model
-# chain = prompt | model
-#
-# # Function to execute the query with retry logic
-# def execute_query_with_retry(query, retries=3, delay=2):
-#     for attempt in range(retries):
-#         try:
-#             result = db.run(query)
-#             return result
-#         except psycopg2.Error as e:
-#             print(f"Error executing query: {e}")
-#             if attempt < retries - 1:
-#                 print(f"Retrying in {delay} seconds...")
-#             else:
-#                 print("Max retries reached. Query failed.")
-#                 return None
-#
-# # Generate the SQL query using the LLaMA model
-# result = chain.invoke({
-#     "schema_info": schema_info,
-#     "question": "Count the number of students for each course"
-# })
-#
-# print("Generated SQL Query: ", result)
-#
-# # Execute the generated SQL query with retry logic
-# query_result = execute_query_with_retry(result)
-#
-# print("Query Result: ", query_result)
+# Initialize the model with the specified version of LLaMA
+model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
+
+# Create a chain by piping the prompt to the model
+chain = prompt | model
+
+# Function to execute the query with retry logic
+def execute_query_with_retry(query, retries=3, delay=2):
+    for attempt in range(retries):
+        try:
+            result = db.run(query)
+            return result
+        except psycopg2.Error as e:
+            print(f"Error executing query: {e}")
+            if attempt < retries - 1:
+                print(f"Retrying in {delay} seconds...")
+            else:
+                print("Max retries reached. Query failed.")
+                return None
+
+# Generate the SQL query using the LLaMA model
+result = chain.invoke({
+    "schema_info": schema_info,
+    "question": "Count the number of students for each course"
+})
+
+print("Generated SQL Query: ", result)
+
+# Execute the generated SQL query with retry logic
+query_result = execute_query_with_retry(result)
+
+print("Query Result: ", query_result)
 
 # Create a cursor object
 # cursor = conn.cursor()
@@ -218,6 +218,6 @@ print(schema_info)
 # # Run the function to execute the query
 # execute_query()
 #
-# # Close the cursor and connection
+# Close the cursor and connection
 # cursor.close()
 # conn.close()
