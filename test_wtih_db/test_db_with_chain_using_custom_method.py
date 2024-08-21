@@ -2,7 +2,11 @@ from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SQLDatabase
-from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool, QuerySQLCheckerTool
+
+# https://api.python.langchain.com/en/latest/sql/langchain_experimental.sql.base.SQLDatabaseChain.html use to check query
+# https://python.langchain.com/v0.1/docs/use_cases/sql/query_checking/ use this link to see how to validate
+# https://python.langchain.com/v0.1/docs/use_cases/sql/large_db/ use this link to see technique to handle large database
 
 # Setup db and connect db
 db = SQLDatabase.from_uri(
@@ -17,7 +21,8 @@ prompt = ChatPromptTemplate.from_template(template)
 
 model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
 
-# we can use this class to execute the query
+# we can use this class to execute the query that got from the response
+# i found the QuerySQLCheckerTool use to check the query but did not test it yet
 execute_query = QuerySQLDataBaseTool(db=db)
 
 chain = prompt | model | StrOutputParser() | execute_query
