@@ -4,14 +4,14 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SQLDatabase
 
 # Setup and connect to the database
-db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/tharo_db")
+db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/virtual_biz_db", sample_rows_in_table_info = 3)
 
 # Initialize the model
 model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
 
 
 # this function use to execute a chain with retries
-def execute_chain(chain, input_data, retries=3):
+def execute_chain(chain, input_data, retries=5):
     for _ in range(retries):
         result = chain.invoke(input_data)
         print("this is result : ", result)
@@ -25,7 +25,7 @@ def execute_chain(chain, input_data, retries=3):
 def generate_sql_query(question):
     prompt_template = """You are a SQL expert of {dialect}. 
     Please write an SQL query base on this question: "{question}" and pay attention to use only the column names you can see in the tables below.
-    Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+    Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table and if you use the SELECT with GROUP BY, please check it because if it not appear in group by it will got error.
     
     Here is database information: {schema_info}.
     
@@ -46,14 +46,11 @@ def generate_sql_query(question):
 # this function use to validate and correct the sql query
 def validate_sql_query(query_result):
     validate_template = """Here is the query to check: "{query_result}"
-
-    Please ensure the query is executable. If there are any mistakes or incorrect column names, 
-    correct them and rewrite the query. 
     
-    Please use only this database information: {schema_info}
-
-    Output the final SQL query in this format:
-    Final SQL query: "Output here"
+    Please double check and make sure the query can execute well and if it is okay please return the original query, however if there are any mistakes or incorrect column name, please correct it then rewrite the query, following only this database information: {schema_info}
+    
+    Output the final SQL query only and for the output, please following this format:
+    Final SQL query: "output here"
     """
 
     validate_prompt = ChatPromptTemplate.from_template(validate_template)
@@ -66,10 +63,9 @@ def validate_sql_query(query_result):
 
     return execute_chain(validate_chain, input_data)
 
-
+print("Loading ...")
 # call the first method to generate the query
-query_result = generate_sql_query("how many students in each class")
-
+query_result = generate_sql_query("what are the products that available in Tharo Shop")
 print("this is query_result: ", query_result)
 
 # check the response, if we got response then take that to validate
@@ -78,4 +74,7 @@ if query_result:
 
     # check the response from validate, if got it, then print it out
     if final_result:
+        # we can take this "final_result", to run with our database
         print("Final Result:", final_result)
+
+print("Done!")
