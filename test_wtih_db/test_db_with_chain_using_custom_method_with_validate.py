@@ -3,71 +3,79 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SQLDatabase
 
-# Setup db and connect db
-db = SQLDatabase.from_uri(
-    f"postgresql+psycopg2://postgres:123@localhost:5432/tharo_db",
-)
+# Setup and connect to the database
+db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/tharo_db")
 
-template = """You are a SQL expert of {dialect}. 
-Please write an SQL query base on this question: "{question}" and pay attention to use only the column names you can see in the tables below.
-Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
-
-Here is database information: {schema_info}.
-
-Only provide the SQL script without any explanation."""
-
-prompt = ChatPromptTemplate.from_template(template)
-
+# Initialize the model
 model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
 
-chain = prompt | model | StrOutputParser()
 
-print("loading ... ")
-query_result = None
+# this function use to execute a chain with retries
+def execute_chain(chain, input_data, retries=3):
+    for _ in range(retries):
+        result = chain.invoke(input_data)
+        print("this is result : ", result)
+        if result:
+            return result
+    print("Failed to get a valid response after multiple attempts.")
+    return None
 
-# retry 3 time if the model cannot provide the response
-for _ in range(3):
-    query_result = chain.invoke({
+
+# this function use to generate sql query
+def generate_sql_query(question):
+    prompt_template = """You are a SQL expert of {dialect}. 
+    Please write an SQL query base on this question: "{question}" and pay attention to use only the column names you can see in the tables below.
+    Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+    
+    Here is database information: {schema_info}.
+    
+    Only provide the SQL script without any explanation."""
+
+    prompt = ChatPromptTemplate.from_template(prompt_template)
+    chain = prompt | model | StrOutputParser()
+
+    input_data = {
         "dialect": db.dialect,
         "schema_info": db.get_table_info(),
-        "question": "how many students in each class"
-    })
-    if query_result:
-        break
+        "question": question
+    }
 
-if not query_result:
-    print("Failed to get a valid response after 3 attempts.")
-else:
-    print("Query Result:", query_result)
-    print("done ...")
+    return execute_chain(chain, input_data)
 
-# validate the query with another prompt
-validate_template = """
-Here is the query to check: "{query_result}"
 
-Please double check and make sure the query can execute well, if there are any mistakes or incorrect column name please correct it then rewrite the query, following only this database information: {schema_info}
+# this function use to validate and correct the sql query
+def validate_sql_query(query_result):
+    validate_template = """Here is the query to check: "{query_result}"
 
-Output the final SQL query only and for the output, please following this format:
-Final SQL query: "output here"
-"""
+    Please ensure the query is executable. If there are any mistakes or incorrect column names, 
+    correct them and rewrite the query. 
+    
+    Please use only this database information: {schema_info}
 
-validate_prompt = ChatPromptTemplate.from_template(validate_template)
+    Output the final SQL query in this format:
+    Final SQL query: "Output here"
+    """
 
-print(validate_prompt.format(query_result=query_result, schema_info=db.get_table_info()))
+    validate_prompt = ChatPromptTemplate.from_template(validate_template)
+    validate_chain = validate_prompt | model | StrOutputParser()
 
-validate_chain = validate_prompt | model | StrOutputParser()
+    input_data = {
+        "query_result": query_result,
+        "schema_info": db.get_table_info()
+    }
 
-print("loading ... ")
-final_result = None
+    return execute_chain(validate_chain, input_data)
 
-for _ in range(3):
-    final_result = validate_chain.invoke({"query_result": query_result,
-                                          "schema_info": db.get_table_info()})
+
+# call the first method to generate the query
+query_result = generate_sql_query("how many students in each class")
+
+print("this is query_result: ", query_result)
+
+# check the response, if we got response then take that to validate
+if query_result:
+    final_result = validate_sql_query(query_result)
+
+    # check the response from validate, if got it, then print it out
     if final_result:
-        break
-
-if not final_result:
-    print("Failed to get a valid response after 3 attempts.")
-else:
-    print("final_result:", final_result)
-    print("done ...")
+        print("Final Result:", final_result)
