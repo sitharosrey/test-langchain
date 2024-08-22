@@ -38,8 +38,10 @@ def generate_query_and_test_query(llm_model, question, database, check_query=Fal
     }
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
+    count = 0
+
     while True:
-        count = 0
+        print("Hi")
         chain = prompt | llm_model | StrOutputParser()
 
         response_query = chain.invoke(input_data)
@@ -56,6 +58,7 @@ def generate_query_and_test_query(llm_model, question, database, check_query=Fal
                     except Exception as e:
                         # I want to implement the memory here, base on the that regenerate again
                         print("Cannot execute query and here is the error : ", e)
+                        continue
             break
         count += 1
     return response_query
