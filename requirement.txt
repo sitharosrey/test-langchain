@@ -2,3 +2,5 @@ langchain-ollama
 psycopg2
 langchain-community
 langchain-experimental
+langchain-groq
+python-dotenv

@@ -2,13 +2,27 @@ from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SQLDatabase
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+
+import os
+
+
+load_dotenv()
+
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+print(GROQ_API_KEY)
 
 # Setup and connect to the database
-db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/virtual_biz_db", sample_rows_in_table_info = 3)
+db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/virtual_biz_db",
+                          sample_rows_in_table_info=3)
 
 # Initialize the model
-model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
+# model = OllamaLLM(model="llama3.1:8b-instruct-q5_0")
+model = ChatGroq(groq_api_key=GROQ_API_KEY, model="llama3-70b-8192")
 
+# this can work with small database
 
 # this function use to execute a chain with retries
 def execute_chain(chain, input_data, retries=5):
@@ -16,6 +30,7 @@ def execute_chain(chain, input_data, retries=5):
         result = chain.invoke(input_data)
         print("this is result : ", result)
         if result:
+            print("I know : ", result)
             return result
     print("Failed to get a valid response after multiple attempts.")
     return None
@@ -40,6 +55,9 @@ def generate_sql_query(question):
         "question": question
     }
 
+    print(prompt.format(dialect=db.dialect,
+                        schema_info=db.get_table_info(),
+                        question=question))
     return execute_chain(chain, input_data)
 
 
@@ -63,9 +81,10 @@ def validate_sql_query(query_result):
 
     return execute_chain(validate_chain, input_data)
 
+
 print("Loading ...")
 # call the first method to generate the query
-query_result = generate_sql_query("what are the products that available in Tharo Shop")
+query_result = generate_sql_query("Find all information of product in tharo shop")
 print("this is query_result: ", query_result)
 
 # check the response, if we got response then take that to validate
