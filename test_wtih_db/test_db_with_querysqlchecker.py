@@ -18,7 +18,7 @@ db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/vir
 
 model = ChatGroq(groq_api_key=GROQ_API_KEY, model="llama3-70b-8192")
 
-db_chain = SQLDatabaseChain.from_llm(model, db, verbose=True, use_query_checker=True)
-result = db_chain.invoke({"query" : "Find all information of product in tharo shop"})
+db_chain = SQLDatabaseChain.from_llm(model, db, verbose=True)
+output = db_chain.invoke({"query" : "Find all information of product in tharo shop"})
 
-print(result)
+print(output['result'])

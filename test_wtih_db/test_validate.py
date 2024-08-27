@@ -69,4 +69,4 @@ def generate_query_and_test_query(llm_model, prompt_template, question, database
     return response_query
 
 
-print(generate_query_and_test_query(model, my_prompt_template, "List all products in tharo shop", db, 3))
+print(generate_query_and_test_query(model, my_prompt_template, "Find all information of product in tharo shop", db, 3))
