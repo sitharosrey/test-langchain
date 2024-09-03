@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="tharo_db@localhost" uuid="e4fb45cf-d66f-4c59-90c5-ff232d0e3947">
+    <data-source source="LOCAL" name="virtual_biz_db@localhost" uuid="4938e8f6-92c0-4c77-92fe-9fb217894035">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/tharo_db</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/virtual_biz_db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

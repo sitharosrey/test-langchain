@@ -5,7 +5,6 @@ from langchain_groq import ChatGroq
 
 import os
 
-
 load_dotenv()
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -19,6 +18,6 @@ db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:123@localhost:5432/vir
 model = ChatGroq(groq_api_key=GROQ_API_KEY, model="llama3-70b-8192")
 
 db_chain = SQLDatabaseChain.from_llm(model, db, verbose=True)
-output = db_chain.invoke({"query" : "Find all information of product in tharo shop"})
+output = db_chain.invoke({"query": "Find all information of product in tharo shop"})
 
 print(output['result'])
